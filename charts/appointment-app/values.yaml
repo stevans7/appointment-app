@@ -1,0 +1,49 @@
+replicaCount: 2
+image:
+  repository: 8509955677.dkr.ecr.us-east-1.amazonaws.com/devops
+  tag: latest
+
+service:
+  type: LoadBalancer
+  port: 80
+
+ingress:
+  enabled: false
+
+mail:
+  service: gmail
+  user: "revazaonz@gmail.com"
+  pass: "fbrj azal kjbala"
+  to: "revazaonz@gmail.com"
+
+mongodb:
+  enabled: true
+  auth:
+    rootPassword: "appointmentAppRoot"
+    username: "appointmentApp"
+    password: "appointmentAppPass"
+    database: "appointments"
+
+prometheus:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+
+grafana:
+  enabled: true
+  adminPassword: "admin"
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: "default"
+          orgId: 1
+          folder: ""
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/default
+  dashboardsConfigMaps:
+    - configMapName: appointment-app-dashboard
+      fileName: appointment-dashboard.json

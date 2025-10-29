@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: appointment-app
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: appointment-app
+  template:
+    metadata:
+      labels:
+        app: appointment-app
+    spec:
+      containers:
+      - name: appointment-app
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: MAIL_SERVICE
+          valueFrom:
+            secretKeyRef:
+              name: appointment-mail
+              key: MAIL_SERVICE
+        - name: MAIL_USER
+          valueFrom:
+            secretKeyRef:
+              name: appointment-mail
+              key: MAIL_USER
+        - name: MAIL_PASS
+          valueFrom:
+            secretKeyRef:
+              name: appointment-mail
+              key: MAIL_PASS
+        - name: MAIL_TO
+          valueFrom:
+            secretKeyRef:
+              name: appointment-mail
+              key: MAIL_TO
+        - name: MONGODB_URI
+          value: "mongodb://{{ .Values.mongodb.auth.username }}:{{ .Values.mongodb.auth.password }}@mongodb.{{ .Release.Namespace }}.svc.cluster.local:27017/{{ .Values.mongodb.auth.database }}?authSource=admin"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
