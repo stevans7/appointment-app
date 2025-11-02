@@ -1,6 +1,6 @@
 replicaCount: 2
 image:
-  repository: 8509955677.dkr.ecr.us-east-1.amazonaws.com/devops
+  repository: 850995567750.dkr.ecr.us-east-1.amazonaws.com/appointment-app
   tag: latest
 
 service:
@@ -11,10 +11,10 @@ ingress:
   enabled: false
 
 mail:
-  service: gmail
-  user: "revazaonz@gmail.com"
-  pass: "fbrj azal kjbala"
-  to: "revazaonz@gmail.com"
+  service: "gmail"
+  user: "${{ secrets.MAIL_USER }}"
+  pass: "${{ secrets.MAIL_PASS }}"
+  to: "${{ secrets.MAIL_TO }}"
 
 mongodb:
   enabled: true
