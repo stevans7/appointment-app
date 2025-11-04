@@ -1,10 +1,18 @@
 terraform {
   required_version = ">= 1.3.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+
   backend "s3" {
-    bucket         = "bucket-soutenance" # replace before use
+    bucket         = "bucket-soutenance"
     key            = "devops-project-appointment/terraform.tfstate"
-    region         = "eu-central-1"
-    dynamodb_table = "dynamo-soutenance"   # replace before use
+    region         = "us-east-1"
+    dynamodb_table = "dynamo-soutenance"
     encrypt        = true
   }
 }
