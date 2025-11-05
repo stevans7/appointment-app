@@ -32,13 +32,17 @@ resource "aws_route_table" "public" {
   }
 }
 
-# --- Subnets publics ---
+# --- Subnets (désactivé le map_public_ip_on_launch pour éviter IP publiques auto) ---
 resource "aws_subnet" "public" {
   count                   = 2
   vpc_id                  = aws_vpc.main.id
   cidr_block              = cidrsubnet(aws_vpc.main.cidr_block, 8, count.index)
   availability_zone       = element(["eu-central-1a", "eu-central-1b"], count.index)
-  map_public_ip_on_launch = true
+
+  # IMPORTANT : mise à false pour éviter l'association automatique d'IP publiques
+  # Si tu veux que des instances aient accès à Internet, place-les dans des subnets privés
+  # et configure un NAT Gateway, ou utilise des VPC endpoints pour les services ECR/S3.
+  map_public_ip_on_launch = false
 
   tags = {
     Name = "public-subnet-${count.index}"
@@ -58,13 +62,13 @@ resource "aws_iam_role" "flow_logs_role" {
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
-    Statement = [{
+    Statement = [ {
       Effect = "Allow"
       Principal = {
         Service = "vpc-flow-logs.amazonaws.com"
       }
       Action = "sts:AssumeRole"
-    }]
+    } ]
   })
 }
 
@@ -82,7 +86,7 @@ resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   kms_key_id        = aws_kms_key.cloudwatch_logs_key_root.arn
 }
 
-# --- Flow Logs --
+# --- Flow Logs ---
 resource "aws_flow_log" "vpc_flow_logs" {
   log_destination      = aws_cloudwatch_log_group.vpc_flow_logs.arn
   log_destination_type = "cloud-watch-logs"

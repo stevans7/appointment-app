@@ -4,12 +4,13 @@ resource "aws_security_group" "eks_control_plane" {
   description = "Security group for EKS control plane"
   vpc_id      = aws_vpc.main.id
 
-  # ✅ Autoriser la communication sortante vers Internet
+  # Restreindre l'egress au CIDR du VPC (évite egress public vers 0.0.0.0/0)
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [aws_vpc.main.cidr_block]
+    description = "Allow control plane egress to VPC internal CIDR only"
   }
 
   tags = {
@@ -23,24 +24,26 @@ resource "aws_security_group" "eks_nodes" {
   description = "Security group for EKS worker nodes"
   vpc_id      = aws_vpc.main.id
 
-  # ✅ Autoriser les nœuds à sortir sur Internet
+  # Restreindre l'egress au CIDR du VPC (les nœuds doivent idéalement être dans des subnets privés
+  # et accéder à Internet via un NAT; sinon ouvrir uniquement les destinations nécessaires via endpoints)
   egress {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [aws_vpc.main.cidr_block]
+    description = "Allow nodes to egress to VPC internal CIDR only (use NAT or endpoints for external access)"
   }
 
-  # ✅ Autoriser les connexions entrantes depuis le control plane
+  # Autoriser les connexions entrantes depuis le control plane
   ingress {
     from_port       = 443
     to_port         = 443
     protocol        = "tcp"
     security_groups = [aws_security_group.eks_control_plane.id]
-    description     = "Allow control plane to reach nodes"
+    description     = "Allow control plane to reach nodes on HTTPS (kubelet)"
   }
 
-  # ✅ Communication interne entre nœuds
+  # Communication interne entre nœuds (node-to-node). description ajoutée.
   ingress {
     description = "Allow node-to-node communication"
     from_port   = 0
@@ -60,13 +63,13 @@ resource "aws_iam_role" "eks_node_group_role" {
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
-    Statement = [{
+    Statement = [ {
       Effect = "Allow"
       Principal = {
         Service = "ec2.amazonaws.com"
       }
       Action = "sts:AssumeRole"
-    }]
+    } ]
   })
 }
 
@@ -92,11 +95,11 @@ module "eks" {
   version = "20.24.3"
 
   cluster_name    = "devops-project-eks"
-  # ✅ Utiliser une version stable
+  # Utiliser une version stable (déjà présente)
   cluster_version = "1.30"
 
   vpc_id     = aws_vpc.main.id
-  subnet_ids = aws_subnet.public[*].id  # ✅ Public subnets = accès Internet OK
+  subnet_ids = aws_subnet.public[*].id  # Ici les subnets n'ont plus map_public_ip_on_launch = true
 
   cluster_enabled_log_types = [
     "api",
@@ -106,7 +109,7 @@ module "eks" {
     "scheduler"
   ]
 
-  # ✅ Autoriser communication entre nœuds et control plane
+  # Autoriser communication entre nœuds et control plane
   cluster_security_group_additional_rules = {
     ingress_nodes_443 = {
       description                = "Allow worker nodes to communicate with control plane"
