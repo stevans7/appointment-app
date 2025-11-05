@@ -10,7 +10,7 @@ Le projet inclut :
 - Scripts d'installation pour bastion et création backend Terraform
 - READMEs pour reproduction et soutenance
 
-⚠️ Remplace les placeholders (`<...>`) dans les fichiers par tes valeurs réelles (AWS_ACCOUNT_ID, TF_STATE_BUCKET, etc.) avant d'exécuter infra.
+
 
 ## Structure
 ```
