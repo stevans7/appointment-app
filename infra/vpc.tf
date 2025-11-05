@@ -82,7 +82,7 @@ resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   kms_key_id        = aws_kms_key.cloudwatch_logs_key_root.arn
 }
 
-# --- Flow Logs ---
+# --- Flow Logs --
 resource "aws_flow_log" "vpc_flow_logs" {
   log_destination      = aws_cloudwatch_log_group.vpc_flow_logs.arn
   log_destination_type = "cloud-watch-logs"
