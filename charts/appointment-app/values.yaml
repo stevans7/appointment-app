@@ -1,7 +1,8 @@
 replicaCount: 2
+
 image:
   repository: 850995567750.dkr.ecr.us-east-1.amazonaws.com/appointment-app
-  tag: latest
+  tag: ""   # On laisse vide ici, car on passe le tag dans le workflow via --set
 
 service:
   type: LoadBalancer
@@ -12,9 +13,9 @@ ingress:
 
 mail:
   service: "gmail"
-  user: "${{ secrets.MAIL_USER }}"
-  pass: "${{ secrets.MAIL_PASS }}"
-  to: "${{ secrets.MAIL_TO }}"
+  user: ""  # Ces valeurs seront injectées par Helm via le workflow
+  pass: ""
+  to: ""
 
 mongodb:
   enabled: true

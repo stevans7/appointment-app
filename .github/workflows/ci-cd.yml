@@ -47,7 +47,7 @@ jobs:
         run: |
           aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
-      - name: Build image
+      - name: Build and push Docker image
         run: |
           IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/appointment-app:${{ github.sha }}
           docker build -t $IMAGE_URI ./app
@@ -81,7 +81,12 @@ jobs:
           EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
         run: |
           aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name $EKS_CLUSTER_NAME
-          helm upgrade --install appointment-app-test charts/appointment-app --namespace test --create-namespace --set image.repository=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/appointment-app --set image.tag=${{ github.sha }} --set mail.user=${{ secrets.MAIL_USER }} --set mail.pass=${{ secrets.MAIL_PASS }} --set mail.to=${{ secrets.MAIL_TO }}
+          helm upgrade --install appointment-app-test charts/appointment-app --namespace test --create-namespace \
+            --set image.repository=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/appointment-app \
+            --set image.tag=${{ github.sha }} \
+            --set mail.user=${{ secrets.MAIL_USER }} \
+            --set mail.pass=${{ secrets.MAIL_PASS }} \
+            --set mail.to=${{ secrets.MAIL_TO }}
 
   deploy-prod:
     needs: build-and-push
@@ -97,9 +102,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Deploy via Helm
+      - name: Deploy to production environment
         env:
           EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
         run: |
           aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name $EKS_CLUSTER_NAME
-          helm upgrade --install appointment-app charts/appointment-app --namespace production --create-namespace --set image.repository=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/appointment-app --set image.tag=${{ github.sha }} --set mail.user=${{ secrets.MAIL_USER }} --set mail.pass=${{ secrets.MAIL_PASS }} --set mail.to=${{ secrets.MAIL_TO }}
+          helm upgrade --install appointment-app charts/appointment-app --namespace production --create-namespace \
+            --set image.repository=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/appointment-app \
+            --set image.tag=${{ github.sha }} \
+            --set mail.user=${{ secrets.MAIL_USER }} \
+            --set mail.pass=${{ secrets.MAIL_PASS }} \
+            --set mail.to=${{ secrets.MAIL_TO }}
