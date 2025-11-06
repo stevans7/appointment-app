@@ -16,7 +16,7 @@ resource "aws_key_pair" "bastion_key_pair" {
 
 # Groupe de sécurité dédié au bastion : 
 # - autorise uniquement SSH (port 22) en entrée depuis ton IP locale (modifie selon besoin)
-# - autorise tout en sortie pour que la bastion puisse communiquer librement (ajuste si besoin)
+# - autorise uniquement l’egress vers ton VPC ou plage IP spécifique pour limiter l’exposition
 resource "aws_security_group" "bastion_sg" {
   name        = "bastion-sg"
   description = "Allow SSH from trusted IP(s) only"
@@ -31,11 +31,11 @@ resource "aws_security_group" "bastion_sg" {
   }
 
   egress {
-    description = "Allow all outbound traffic"
+    description = "Allow egress only to VPC"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["10.0.0.0/16"]  # <-- Remplace par ta plage VPC interne / sous-réseau sécurisé
   }
 
   tags = {
@@ -54,6 +54,16 @@ resource "aws_instance" "bastion" {
 
   # Important : associer une IP publique car map_public_ip_on_launch = false dans subnet
   associate_public_ip_address = true
+
+  # Sécurité : forcer IMDS token
+  metadata_options {
+    http_tokens = "required"
+  }
+
+  # Chiffrement du volume racine
+  root_block_device {
+    encrypted = true
+  }
 
   tags = {
     Name        = "bastion"
