@@ -8,6 +8,7 @@ on:
 
 env:
   AWS_REGION: eu-central-1
+  EKS_CLUSTER_NAME: devops-project-eks   # <-- nom exact de ton cluster EKS
 
 jobs:
   security-scan:
@@ -77,10 +78,8 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy to test environment
-        env:
-          EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
         run: |
-          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name $EKS_CLUSTER_NAME
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER_NAME }}
           helm upgrade appointment-app-test charts/appointment-app --install --namespace test --create-namespace --set image.repository=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/appointment-app --set image.tag=${{ github.sha }} --set mail.user=${{ secrets.MAIL_USER }} --set mail.pass=${{ secrets.MAIL_PASS }} --set mail.to=${{ secrets.MAIL_TO }}
 
   deploy-prod:
@@ -98,8 +97,6 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Deploy to production environment
-        env:
-          EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
         run: |
-          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name $EKS_CLUSTER_NAME
+          aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER_NAME }}
           helm upgrade appointment-app charts/appointment-app --install --namespace production --create-namespace --set image.repository=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/appointment-app --set image.tag=${{ github.sha }} --set mail.user=${{ secrets.MAIL_USER }} --set mail.pass=${{ secrets.MAIL_PASS }} --set mail.to=${{ secrets.MAIL_TO }}
